@@ -1,209 +1,114 @@
-import Head from 'next/head'
+import { useEffect, useState } from "react";
+import { useInView } from "react-intersection-observer";
+import Loader from "react-loader-spinner";
+
+import moment from "moment";
+
+const POSTS_URL = `/api/posts`;
+const TRUNCATE_LENGTH = 40;
+const NUM_POSTS = 20; // Load 20 posts at a time
+
+const Caption = ({ post }) => {
+  const [showCaption, setShowCaption] = useState(false);
+
+  const truncateCaption = caption => {
+    if (caption.length < TRUNCATE_LENGTH) {
+      return caption;
+    }
+
+    return caption.slice(0, TRUNCATE_LENGTH) + "...";
+  };
+
+  return (
+    <div className='p-2'>
+      <span className='mr-2 font-semibold lowercase'>{post.user.name}</span>
+      <span>{showCaption ? post.caption : truncateCaption(post.caption)}</span>
+      {!showCaption && post.caption.length > TRUNCATE_LENGTH && (
+        <span className='ml-1 text-gray-600' onClick={e => setShowCaption(!showCaption)}>
+          more
+        </span>
+      )}
+    </div>
+  );
+};
 
 export default function Home() {
+  const [posts, setPosts] = useState([]);
+  const [loadedPosts, setLoadedPosts] = useState([]);
+
+  useEffect(() => {
+    setLoadedPosts(posts.slice(0, NUM_POSTS));
+  }, [posts]);
+
+  const getNewPosts = () => {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve([...loadedPosts, ...posts.slice(loadedPosts.length, loadedPosts.length + NUM_POSTS)]);
+      }, Math.floor(Math.random() * 2000));
+    });
+  };
+
+  const PostLoader = () => {
+    const [ref, inView, entry] = useInView({
+      threshold: 0,
+    });
+
+    useEffect(() => {
+      if (inView) {
+        getNewPosts().then(newPosts => setLoadedPosts(newPosts));
+      }
+    }, [inView]);
+
+    return (
+      <div ref={ref} className='flex items-center justify-center p-2'>
+        {inView && <Loader type='TailSpin' color='#A0AEC0' height={24} width={24} />}
+      </div>
+    );
+  };
+
+  useEffect(() => {
+    fetch(POSTS_URL)
+      .then(res => res.json())
+      .then(posts => setPosts(posts));
+  }, []);
+
   return (
-    <div className="container">
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+    <div className='overflow-hidden'>
+      <div className='space-y-4'>
+        {loadedPosts.map(post => {
+          return (
+            <div key={post.id} className='flex flex-col text-sm'>
+              <div className='flex items-center p-2'>
+                <img className='w-10 h-10 mr-2 rounded-full' src={post.user.avatarUrl}></img>
 
-      <main>
-        <h1 className="title">
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
+                <div className='flex flex-col flex-1 text-xs'>
+                  <span className='font-semibold'>{post.user.name}</span>
+                  <span>{post.location}</span>
+                </div>
 
-        <p className="description">
-          Get started by editing <code>pages/index.js</code>
-        </p>
+                <button className='focus:outline-none'>
+                  <svg
+                    className='w-4 h-4 text-gray-600 fill-current'
+                    aria-label='More options'
+                    fill='#262626'
+                    height='16'
+                    viewBox='0 0 48 48'
+                    width='16'>
+                    <circle clipRule='evenodd' cx='8' cy='24' fillRule='evenodd' r='4.5'></circle>
+                    <circle clipRule='evenodd' cx='24' cy='24' fillRule='evenodd' r='4.5'></circle>
+                    <circle clipRule='evenodd' cx='40' cy='24' fillRule='evenodd' r='4.5'></circle>
+                  </svg>
+                </button>
+              </div>
+              <img loading='lazy' className='mb-1' src={`https://picsum.photos/seed/${post.id}/640`} />
+              <Caption post={post} />
+              <div className='px-2 text-gray-500 uppercase text-xxs'>{moment(post.posted_at).fromNow()}</div>
+            </div>
+          );
+        })}
+      </div>
 
-        <div className="grid">
-          <a href="https://nextjs.org/docs" className="card">
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className="card">
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className="card"
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className="card"
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-
-      <footer>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className="logo" />
-        </a>
-      </footer>
-
-      <style jsx>{`
-        .container {
-          min-height: 100vh;
-          padding: 0 0.5rem;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-        }
-
-        main {
-          padding: 5rem 0;
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-        }
-
-        footer {
-          width: 100%;
-          height: 100px;
-          border-top: 1px solid #eaeaea;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-
-        footer img {
-          margin-left: 0.5rem;
-        }
-
-        footer a {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-
-        a {
-          color: inherit;
-          text-decoration: none;
-        }
-
-        .title a {
-          color: #0070f3;
-          text-decoration: none;
-        }
-
-        .title a:hover,
-        .title a:focus,
-        .title a:active {
-          text-decoration: underline;
-        }
-
-        .title {
-          margin: 0;
-          line-height: 1.15;
-          font-size: 4rem;
-        }
-
-        .title,
-        .description {
-          text-align: center;
-        }
-
-        .description {
-          line-height: 1.5;
-          font-size: 1.5rem;
-        }
-
-        code {
-          background: #fafafa;
-          border-radius: 5px;
-          padding: 0.75rem;
-          font-size: 1.1rem;
-          font-family: Menlo, Monaco, Lucida Console, Liberation Mono,
-            DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace;
-        }
-
-        .grid {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-wrap: wrap;
-
-          max-width: 800px;
-          margin-top: 3rem;
-        }
-
-        .card {
-          margin: 1rem;
-          flex-basis: 45%;
-          padding: 1.5rem;
-          text-align: left;
-          color: inherit;
-          text-decoration: none;
-          border: 1px solid #eaeaea;
-          border-radius: 10px;
-          transition: color 0.15s ease, border-color 0.15s ease;
-        }
-
-        .card:hover,
-        .card:focus,
-        .card:active {
-          color: #0070f3;
-          border-color: #0070f3;
-        }
-
-        .card h3 {
-          margin: 0 0 1rem 0;
-          font-size: 1.5rem;
-        }
-
-        .card p {
-          margin: 0;
-          font-size: 1.25rem;
-          line-height: 1.5;
-        }
-
-        .logo {
-          height: 1em;
-        }
-
-        @media (max-width: 600px) {
-          .grid {
-            width: 100%;
-            flex-direction: column;
-          }
-        }
-      `}</style>
-
-      <style jsx global>{`
-        html,
-        body {
-          padding: 0;
-          margin: 0;
-          font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
-            Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
-            sans-serif;
-        }
-
-        * {
-          box-sizing: border-box;
-        }
-      `}</style>
+      {posts.length > loadedPosts.length && <PostLoader />}
     </div>
-  )
+  );
 }
