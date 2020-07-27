@@ -22,6 +22,12 @@ Visit the `api` folder in `pages` to view all available API endpoints for the ap
 
 - Posts
 
+The following API endpoints are planned for development:
+
+- Explore
+- Notifications
+- Profile
+
 ## Contributing
 
 Feel free to submit issues with suggestions and feature requests, as well as opening a PR to contribute ideas. :slightly_smiling_face:
