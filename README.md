@@ -2,7 +2,7 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 # Nextgram
 
-**Nextgram** is an Instagram clone written in [Next.js](https://nextjs.org) and [TailwindCSS](https://tailwindcss.com).
+[**Nextgram**](https://nextgram-ten.vercel.app/) is an Instagram clone written in [Next.js](https://nextjs.org) and [TailwindCSS](https://tailwindcss.com).
 
 ## Getting Started
 
